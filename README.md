@@ -17,10 +17,12 @@ pip install opencv-python numpy
 
 ## Files Required
 
-1. **yolov3.weights**: Pre-trained YOLOv3 weights.
-2. **yolov3.cfg**: YOLOv3 configuration file.
-3. **coco.names**: Text file containing class names (one class per line) from the COCO dataset.
-4. **image04.jpg**: Input image on which object detection will be performed.
+1. **yolov3.weights**: Pre-trained YOLOv3 weights. You can download it from the following link:
+   - [Download YOLOv3 Weights](https://github.com/patrick013/Object-Detection---Yolov3/blob/master/model/yolov3.weights)
+
+2. **yolov3.cfg**: Configuration file for YOLOv3. You can find it in the [YOLO repository](https://github.com/pjreddie/darknet/blob/master/cfg/yolov3.cfg).
+
+3. **coco.names**: A file containing the names of the classes YOLOv3 can detect. You can get it from [this link](https://github.com/pjreddie/darknet/blob/master/data/coco.names).
 
 ## How to Run
 
