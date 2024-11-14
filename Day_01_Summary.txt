@@ -1,0 +1,86 @@
+import cv2 
+# Reason: This imports the OpenCV library, which is essential for image processing, computer vision tasks, and object detection.
+
+import numpy as np
+# Reason: This imports NumPy, which is used for array manipulation, matrix operations, and numerical computations required during object detection.
+
+yolo = cv2.dnn.readNet("yolov33.weights", "yolov3.cfg")
+# Reason: This loads the pre-trained YOLO model using the weights (yolov33.weights) and configuration (yolov3.cfg) files. These files contain the model’s parameters and architecture for detecting objects.
+
+classes = []
+# Reason: Initializes an empty list classes[] to store the object class names (like "person", "car", etc.) that the YOLO model can detect.
+
+with open("coco.names", "r") as file:
+    classes = [line.strip() for line in file.readlines()]
+# Reason: Opens the coco.names file that contains the list of classes the YOLO model is trained to detect. It reads the file line by line, removes any extra spaces with strip(), and stores the class names in the classes[] list.
+
+layer_names = yolo.getLayerNames()
+# Reason: Fetches all the layer names in the YOLO model. These layer names are required for later extraction of output layers.
+
+output_layers = [layer_names[i[0] - 1] for i in yolo.getUnconnectedOutLayers()]
+# Reason: Extracts the output layers from the model. These are the layers that will output the predictions for detected objects. The function getUnconnectedOutLayers() returns a list of indices, and we use them to get corresponding names from the layer_names list.
+
+colorRed = (0, 0, 255)
+colorGreen = (0, 255, 0)
+# Reason: Defines color tuples using BGR (Blue, Green, Red) format for drawing bounding boxes (colorGreen) and text labels (colorRed).
+
+name = "image05.jpg"
+# Reason: Specifies the image file name to process. The image needs to be in the same directory as the script, or you must provide the full path to it.
+
+img = cv2.imread(name)
+# Reason: Loads the image into the img variable using OpenCV’s imread() function. This image will be used for object detection.
+
+height, width, channels = img.shape
+# Reason: Extracts the image's dimensions: height, width, and the number of color channels (channels). These are required to correctly scale the bounding boxes later.
+
+blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+# Reason: Converts the image into a format suitable for the YOLO model. blobFromImage() resizes the image to 416x416 pixels, normalizes the pixel values (by multiplying by 0.00392), and prepares it as a blob to feed into the neural network.
+
+yolo.setInput(blob)
+# Reason: Sets the input for the YOLO network to the preprocessed image blob (blob), which will be processed for object detection.
+
+outputs = yolo.forward(output_layers)
+# Reason: Performs a forward pass through the network, obtaining predictions (detected objects and their properties) from the output layers.
+
+class_ids = []
+confidences = []
+boxes = []
+# Reason: Initializes empty lists to store detected class IDs (class_ids[]), confidence scores (confidences[]), and bounding box coordinates (boxes[]).
+
+for output in outputs:
+    for detection in output:
+        scores = detection[5:]
+        class_id = np.argmax(scores)
+        confidence = scores[class_id]
+        if confidence > 0.5:
+            center_x = int(detection[0] * width)
+            center_y = int(detection[1] * height)
+            w = int(detection[2] * width)
+            h = int(detection[3] * height)
+            x = int(center_x - w / 2)
+            y = int(center_y - h / 2)
+            boxes.append([x, y, w, h])
+            confidences.append(float(confidence))
+            class_ids.append(class_id)
+# Reason: Iterates through each output detection. The detection contains scores for each class. The class with the highest score is selected, and if its confidence is greater than 0.5, the corresponding bounding box coordinates are calculated, and the class ID, confidence, and box coordinates are stored in their respective lists.
+
+indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+# Reason: Applies Non-Maximum Suppression (NMS) to remove overlapping bounding boxes. This step helps eliminate duplicate detections and keeps only the best bounding box for each detected object.
+
+for i in range(len(boxes)):
+    if i in indexes:
+        x, y, w, h = boxes[i]
+        label = str(classes[class_ids[i]])
+        cv2.rectangle(img, (x, y), (x + w, y + h), colorGreen, 3)
+        cv2.putText(img, label, (x, y + 10), cv2.FONT_HERSHEY_PLAIN, 8, colorRed, 8)
+# Reason: Loops through the bounding boxes and draws a rectangle around the detected object with cv2.rectangle() if the detection is retained after NMS. The corresponding class label is added using cv2.putText().
+
+# cv2.imshow("Image", img)
+# Reason: This line is commented out, but if enabled, it would display the image with the detected bounding boxes and labels.
+
+cv2.imwrite("output.jpg", img)
+# Reason: Saves the image with bounding boxes and labels drawn on it as output.jpg to the disk.
+
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+# Reason: These lines are commented out, but if enabled, they would wait for a key press before closing any OpenCV windows.
